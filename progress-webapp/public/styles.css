@@ -81,9 +81,15 @@ body {
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 170px;
+  grid-template-columns: 1fr auto;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.toolbar-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 input,
@@ -154,10 +160,22 @@ button:hover {
   background: #eef2ff;
 }
 
+.badge.python-mini-trials {
+  border-color: #9b5de5aa;
+  color: #7a2fb9;
+  background: #f3e8ff;
+}
+
 body.dark .badge.generated {
   border-color: #5e8eff80;
   color: #b6ccff;
   background: #1f2c46;
+}
+
+body.dark .badge.python-mini-trials {
+  border-color: #b884ff80;
+  color: #e1c8ff;
+  background: #2d1e42;
 }
 
 .badge.status-working-on {
@@ -280,5 +298,13 @@ body.dark .markdown code {
 
   .project-list {
     max-height: 45vh;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-controls {
+    justify-content: flex-start;
   }
 }

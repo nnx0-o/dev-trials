@@ -22,12 +22,20 @@
       <section class="left-panel">
         <div class="toolbar">
           <input id="searchInput" type="text" placeholder="Search by project name or number..." />
-          <select id="filterSelect">
-            <option value="all">All</option>
-            <option value="working-on">Working On</option>
-            <option value="postponed">Postponed</option>
-            <option value="done">Done</option>
-          </select>
+          <div class="toolbar-controls">
+            <select id="filterSelect">
+              <option value="all">All</option>
+              <option value="working-on">Working On</option>
+              <option value="postponed">Postponed</option>
+              <option value="done">Done</option>
+            </select>
+            <select id="categorySelect">
+              <option value="all">All Categories</option>
+              <option value="generated">Generated</option>
+              <option value="python-mini-trials">Python MiniTrials</option>
+              <option value="ungenerated">Ungenerated</option>
+            </select>
+          </div>
         </div>
         <div id="projectList" class="project-list"></div>
       </section>

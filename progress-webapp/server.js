@@ -11,6 +11,7 @@ const WORKSPACE_ROOT = path.resolve(__dirname, "..");
 const TRIALS_ROOT = path.join(WORKSPACE_ROOT, "Trials");
 const GENERATED_ROOT = path.join(TRIALS_ROOT, "Generated");
 const UNGENERATED_ROOT = path.join(TRIALS_ROOT, "Ungenerated");
+const PYTHON_MINITRIALS_ROOT = path.join(TRIALS_ROOT, "Python MiniTrials");
 const WIP_ROOT = path.join(WORKSPACE_ROOT, "Work In Progress");
 const STATE_FILE = path.join(WIP_ROOT, "project-tracker-state.json");
 const SETTINGS_FILE = path.join(WIP_ROOT, "settings.json");
@@ -36,6 +37,17 @@ function ensureSettingsFile() {
   if (!fs.existsSync(SETTINGS_FILE)) {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ darkMode: false }, null, 2), "utf8");
   }
+}
+
+function ensureWipRoots() {
+  if (!fs.existsSync(WIP_ROOT)) {
+    fs.mkdirSync(WIP_ROOT, { recursive: true });
+  }
+  const pythonWipRoot = path.join(WIP_ROOT, "Python MiniTrials");
+  if (!fs.existsSync(pythonWipRoot)) {
+    fs.mkdirSync(pythonWipRoot, { recursive: true });
+  }
+  return pythonWipRoot;
 }
 
 function readSettings() {
@@ -83,6 +95,7 @@ function vscodeFileLink(absPath) {
 
 function readProjectDirs(baseDir, bucket) {
   if (!fs.existsSync(baseDir)) return [];
+  const wipBaseDir = bucket === "python-mini-trials" ? path.join(WIP_ROOT, "Python MiniTrials") : WIP_ROOT;
   return fs
     .readdirSync(baseDir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
@@ -90,28 +103,37 @@ function readProjectDirs(baseDir, bucket) {
       const folderName = d.name;
       const absPath = path.join(baseDir, folderName);
       const id = `${parseProjectNumber(folderName)}-${safeSlug(folderName)}`;
-      const wipPath = path.join(WIP_ROOT, folderName);
+      const wipPath = path.join(wipBaseDir, folderName);
       return {
         id,
         number: parseProjectNumber(folderName),
         folderName,
         bucket,
+        bucketLabel: bucket === "generated" ? "Generated" : bucket === "python-mini-trials" ? "Python MiniTrials" : "Ungenerated",
         absPath,
         isGenerated: bucket === "generated",
         isUngenerated: bucket === "ungenerated",
+        isPythonMiniTrials: bucket === "python-mini-trials",
         hasWipCopy: fs.existsSync(wipPath),
+        wipBaseDir,
         wipPath,
       };
     });
 }
 
 function getAllProjects() {
+  ensureWipRoots();
   const state = readState();
   const projects = [
     ...readProjectDirs(GENERATED_ROOT, "generated"),
+    ...readProjectDirs(PYTHON_MINITRIALS_ROOT, "python-mini-trials"),
     ...readProjectDirs(UNGENERATED_ROOT, "ungenerated"),
   ]
-    .sort((a, b) => a.number - b.number)
+    .sort((a, b) => {
+      if (a.bucket === b.bucket) return a.number - b.number;
+      const bucketOrder = { generated: 0, "python-mini-trials": 1, ungenerated: 2 };
+      return bucketOrder[a.bucket] - bucketOrder[b.bucket];
+    })
     .map((p) => {
       const status = state.projects[p.id]?.status || "not-set";
       return {
@@ -141,8 +163,7 @@ function docFileName(docType) {
 }
 
 app.get("/api/projects", (_req, res) => {
-  const generatedOnly = getAllProjects().filter((p) => p.isGenerated);
-  res.json({ projects: generatedOnly });
+  res.json({ projects: getAllProjects() });
 });
 
 app.get("/api/settings", (_req, res) => {
@@ -193,6 +214,9 @@ app.post("/api/projects/:id/copy-to-wip", (req, res) => {
 
   if (!fs.existsSync(WIP_ROOT)) {
     fs.mkdirSync(WIP_ROOT, { recursive: true });
+  }
+  if (!fs.existsSync(project.wipBaseDir)) {
+    fs.mkdirSync(project.wipBaseDir, { recursive: true });
   }
 
   if (!fs.existsSync(project.wipPath)) {
@@ -254,6 +278,8 @@ app.get("/api/projects/:id/docs/:docType", (req, res) => {
   const html = marked.parse(markdown || "");
   return res.json({ exists: true, markdown, html, path: fullPath, vscodeLink: vscodeFileLink(fullPath) });
 });
+
+ensureWipRoots();
 
 app.listen(PORT, () => {
   console.log(`Trial progress app running at http://localhost:${PORT}`);

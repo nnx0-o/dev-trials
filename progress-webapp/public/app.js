@@ -2,6 +2,7 @@ const state = {
   projects: [],
   selectedId: null,
   filter: "all",
+  category: "all",
   search: "",
   docType: "todo",
   docSource: "original",
@@ -10,6 +11,7 @@ const state = {
 const projectListEl = document.getElementById("projectList");
 const projectDetailEl = document.getElementById("projectDetail");
 const filterSelect = document.getElementById("filterSelect");
+const categorySelect = document.getElementById("categorySelect");
 const searchInput = document.getElementById("searchInput");
 const summaryEl = document.getElementById("summary");
 const themeToggle = document.getElementById("themeToggle");
@@ -31,6 +33,8 @@ function filteredProjects() {
     const matchesSearch = !q || p.folderName.toLowerCase().includes(q) || String(p.number).includes(q);
     if (!matchesSearch) return false;
 
+    if (state.category !== "all" && p.bucket !== state.category) return false;
+
     if (state.filter === "all") return true;
     return p.status === state.filter;
   });
@@ -46,11 +50,13 @@ function statusBadge(status) {
 function renderSummary() {
   const total = state.projects.length;
   const generated = state.projects.filter((p) => p.isGenerated).length;
+  const miniTrials = state.projects.filter((p) => p.isPythonMiniTrials).length;
   const wip = state.projects.filter((p) => p.hasWipCopy).length;
   const working = state.projects.filter((p) => p.status === "working-on").length;
   summaryEl.innerHTML = `
     <div>Total: <strong>${total}</strong></div>
     <div>Generated: <strong>${generated}</strong></div>
+    <div>Python MiniTrials: <strong>${miniTrials}</strong></div>
     <div>In WIP: <strong>${wip}</strong></div>
     <div>Working On: <strong>${working}</strong></div>
   `;
@@ -70,7 +76,7 @@ function renderProjectList() {
         <button class="project-card ${activeClass}" data-id="${p.id}">
           <h3 class="project-title">${escapeHtml(p.folderName)}</h3>
           <div class="badges">
-            <span class="badge ${p.isGenerated ? "generated" : ""}">${p.isGenerated ? "Generated" : "Ungenerated"}</span>
+            <span class="badge ${p.isGenerated ? "generated" : p.isPythonMiniTrials ? "python-mini-trials" : ""}">${p.bucketLabel}</span>
             <span class="badge status-${p.status}">${statusBadge(p.status)}</span>
             ${p.hasWipCopy ? '<span class="badge">WIP copy</span>' : ""}
           </div>
@@ -259,6 +265,11 @@ async function init() {
 
   filterSelect.addEventListener("change", () => {
     state.filter = filterSelect.value;
+    renderProjectList();
+  });
+
+  categorySelect.addEventListener("change", () => {
+    state.category = categorySelect.value;
     renderProjectList();
   });
 
