@@ -1,0 +1,6 @@
+date,region,product,qty,price,discount
+2026-06-01,EU,Widget,10,12.5,0.1
+2026-06-02,EU,Gizmo,5,20,
+2026-06-02,US,Widget,7,12.5,0.05
+2026-06-03,US,Thing,2,35,0.0
+2026-06-03,APAC,Gizmo,8,20,0.15

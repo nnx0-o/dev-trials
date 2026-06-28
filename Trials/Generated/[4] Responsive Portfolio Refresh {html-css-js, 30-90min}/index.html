@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portfolio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <button id="menuBtn">Menu</button>
+    <nav id="mobileNav" class="nav hidden">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="projects">
+      <h1>Projects</h1>
+      <div class="chips">
+        <button data-filter="all">All</button>
+        <button data-filter="web">Web</button>
+        <button data-filter="python">Python</button>
+      </div>
+      <div id="cards" class="cards">
+        <article class="card" data-cat="web">Landing Page</article>
+        <article class="card" data-cat="python">Data Script</article>
+        <article class="card" data-cat="web">Widget Tool</article>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

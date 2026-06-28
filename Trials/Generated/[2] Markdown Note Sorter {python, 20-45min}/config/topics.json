@@ -1,0 +1,5 @@
+{
+  "python": ["python", "pandas", "pytest"],
+  "web": ["html", "css", "javascript", "react"],
+  "infra": ["docker", "terraform", "pipeline"]
+}

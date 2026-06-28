@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trial Progress Manager</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Trial Progress Manager</h1>
+        <p>Track generated trials, work-in-progress copies, and per-project docs.</p>
+      </div>
+      <div class="topbar-right">
+        <button id="themeToggle" type="button">Dark Mode: Off</button>
+        <div class="summary" id="summary"></div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="left-panel">
+        <div class="toolbar">
+          <input id="searchInput" type="text" placeholder="Search by project name or number..." />
+          <select id="filterSelect">
+            <option value="all">All</option>
+            <option value="working-on">Working On</option>
+            <option value="postponed">Postponed</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div id="projectList" class="project-list"></div>
+      </section>
+
+      <section class="right-panel">
+        <div id="projectDetail" class="detail-card empty-state">Select a project to view details and markdown docs.</div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

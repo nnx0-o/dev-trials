@@ -1,0 +1,14 @@
+{
+  "name": "trial-progress-webapp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local web app to track coding trial progress across Trials and Work In Progress folders",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "marked": "^12.0.2"
+  }
+}
