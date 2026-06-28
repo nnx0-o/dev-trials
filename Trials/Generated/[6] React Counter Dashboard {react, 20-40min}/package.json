@@ -1,0 +1,8 @@
+{
+  "name": "react-counter-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "echo This trial expects React scaffold by the user, use TODO to drive fixes"
+  }
+}

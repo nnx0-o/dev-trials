@@ -94,6 +94,7 @@ button {
   padding: 8px 10px;
   font: inherit;
   background: var(--surface);
+  color: var(--text);
 }
 
 button {
@@ -118,6 +119,7 @@ button:hover {
   background: var(--surface);
   border-radius: 10px;
   padding: 10px;
+  color: var(--text);
 }
 
 .project-card.active {
@@ -176,6 +178,24 @@ body.dark .badge.generated {
   color: #17643f;
 }
 
+body.dark .badge.status-working-on {
+  border-color: #8a6429;
+  background: #3d2f15;
+  color: #ffd38f;
+}
+
+body.dark .badge.status-postponed {
+  border-color: #5b6674;
+  background: #2b3440;
+  color: #d4dbe4;
+}
+
+body.dark .badge.status-done {
+  border-color: #2c7154;
+  background: #16392c;
+  color: #a9e6c8;
+}
+
 .detail-card {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -215,6 +235,7 @@ body.dark .badge.generated {
   margin-top: 12px;
   border-top: 1px solid var(--line);
   padding-top: 12px;
+  color: var(--text);
 }
 
 .markdown h1,
@@ -231,6 +252,15 @@ body.dark .badge.generated {
 body.dark .markdown pre,
 body.dark .markdown code {
   background: #11161c;
+}
+
+.markdown a {
+  color: var(--accent);
+}
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--line);
 }
 
 .markdown pre {

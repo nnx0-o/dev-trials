@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 const { marked } = require("marked");
 
 const app = express();
@@ -199,6 +200,30 @@ app.post("/api/projects/:id/copy-to-wip", (req, res) => {
   }
 
   return res.json({ ok: true, wipPath: project.wipPath, vscodeWipLink: vscodeFileLink(project.wipPath) });
+});
+
+app.post("/api/projects/:id/open-folder", (req, res) => {
+  const { id } = req.params;
+  const target = req.query.target === "wip" ? "wip" : "original";
+  const project = findProjectById(id);
+
+  if (!project) {
+    return res.status(404).json({ error: "Project not found." });
+  }
+
+  const folderPath = target === "wip" ? project.wipPath : project.absPath;
+  if (!folderPath || !fs.existsSync(folderPath)) {
+    return res.status(400).json({ error: "Requested folder does not exist." });
+  }
+
+  // Open in a new VS Code window.
+  const child = spawn("cmd", ["/c", "code", "-n", folderPath], {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
+
+  return res.json({ ok: true });
 });
 
 app.get("/api/projects/:id/docs/:docType", (req, res) => {
