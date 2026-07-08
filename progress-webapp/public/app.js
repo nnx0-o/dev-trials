@@ -151,8 +151,8 @@ async function renderProjectDetail() {
     </div>
 
     <div class="action-row">
-      <button id="openOriginalBtn">Open Original In New VS Code Window</button>
-      ${project.hasWipCopy ? `<button id="openWipBtn">Open WIP In New VS Code Window</button>` : `<button id="copyToWipBtn">Copy To Work In Progress</button>`}
+      ${project.bucket === "generated" || project.bucket === "python-mini-trials" ? `<button id="copyToWipBtn">${project.hasWipCopy ? "Reset WIP Copy" : "Copy To Work In Progress"}</button>` : ""}
+      ${project.hasWipCopy ? `<button id="openWipBtn">Open WIP In New VS Code Window</button>` : ""}
       ${project.hasWipCopy ? `<button id="sourceToggleBtn">Viewing: ${state.docSource === "original" ? "Original" : "WIP"} (Toggle)</button>` : ""}
     </div>
 
@@ -169,12 +169,6 @@ async function renderProjectDetail() {
 
   document.getElementById("statusSelect").addEventListener("change", (e) => {
     updateStatus(project.id, e.target.value).catch(showError);
-  });
-
-  document.getElementById("openOriginalBtn").addEventListener("click", async () => {
-    await api(`/api/projects/${encodeURIComponent(project.id)}/open-folder?target=original`, {
-      method: "POST",
-    });
   });
 
   const openWipBtn = document.getElementById("openWipBtn");
@@ -261,7 +255,7 @@ function applyTheme(isDark) {
 function applyFilterState(filters = {}) {
   state.filters = {
     statuses: Array.isArray(filters.statuses) ? filters.statuses.filter((value) => ["working-on", "postponed", "done", "not-set"].includes(value)) : [],
-    categories: Array.isArray(filters.categories) ? filters.categories.filter((value) => ["generated", "python-mini-trials", "ungenerated"].includes(value)) : [],
+    categories: Array.isArray(filters.categories) ? filters.categories.filter((value) => ["generated", "python-mini-trials"].includes(value)) : [],
     search: typeof filters.search === "string" ? filters.search : "",
   };
 

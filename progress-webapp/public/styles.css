@@ -36,6 +36,11 @@ body {
   color: var(--text);
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 .topbar {
   padding: 16px 20px;
   border-bottom: 1px solid var(--line);
@@ -75,8 +80,9 @@ body {
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
-  height: calc(100vh - 92px);
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 .left-panel,
@@ -84,6 +90,7 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .toolbar {
@@ -159,7 +166,8 @@ button:hover {
   gap: 8px;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 }
 
@@ -264,7 +272,8 @@ body.dark .badge.status-done {
   padding: 14px;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .detail-header {

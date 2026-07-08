@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 4173;
 const WORKSPACE_ROOT = path.resolve(__dirname, "..");
 const TRIALS_ROOT = path.join(WORKSPACE_ROOT, "Trials");
 const GENERATED_ROOT = path.join(TRIALS_ROOT, "Generated");
-const UNGENERATED_ROOT = path.join(TRIALS_ROOT, "Ungenerated");
 const PYTHON_MINITRIALS_ROOT = path.join(TRIALS_ROOT, "Python MiniTrials");
 const WIP_ROOT = path.join(WORKSPACE_ROOT, "Work In Progress");
 const STATE_FILE = path.join(WIP_ROOT, "project-tracker-state.json");
@@ -52,7 +51,7 @@ function ensureWipRoots() {
 
 function normalizeFilters(filters = {}) {
   const allowedStatuses = ["working-on", "postponed", "done", "not-set"];
-  const allowedCategories = ["generated", "python-mini-trials", "ungenerated"];
+  const allowedCategories = ["generated", "python-mini-trials"];
 
   return {
     statuses: Array.isArray(filters.statuses) ? filters.statuses.filter((value) => allowedStatuses.includes(value)) : [],
@@ -127,10 +126,9 @@ function readProjectDirs(baseDir, bucket) {
         number: parseProjectNumber(folderName),
         folderName,
         bucket,
-        bucketLabel: bucket === "generated" ? "Generated" : bucket === "python-mini-trials" ? "Python MiniTrials" : "Ungenerated",
+        bucketLabel: bucket === "generated" ? "Generated" : "Python MiniTrials",
         absPath,
         isGenerated: bucket === "generated",
-        isUngenerated: bucket === "ungenerated",
         isPythonMiniTrials: bucket === "python-mini-trials",
         hasWipCopy: fs.existsSync(wipPath),
         wipBaseDir,
@@ -141,7 +139,7 @@ function readProjectDirs(baseDir, bucket) {
 
 function compareProjects(a, b) {
   const statusOrder = { "working-on": 0, postponed: 1, "not-set": 2, done: 3 };
-  const bucketOrder = { generated: 0, "python-mini-trials": 1, ungenerated: 2 };
+  const bucketOrder = { generated: 0, "python-mini-trials": 1 };
 
   const statusDelta = (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
   if (statusDelta !== 0) return statusDelta;
@@ -160,7 +158,6 @@ function getAllProjects() {
   const projects = [
     ...readProjectDirs(GENERATED_ROOT, "generated"),
     ...readProjectDirs(PYTHON_MINITRIALS_ROOT, "python-mini-trials"),
-    ...readProjectDirs(UNGENERATED_ROOT, "ungenerated"),
   ]
     .map((p) => {
       const status = state.projects[p.id]?.status || "not-set";
@@ -182,7 +179,6 @@ function getAllProjectsLegacy() {
   const projects = [
     ...readProjectDirs(GENERATED_ROOT, "generated"),
     ...readProjectDirs(PYTHON_MINITRIALS_ROOT, "python-mini-trials"),
-    ...readProjectDirs(UNGENERATED_ROOT, "ungenerated"),
   ]
     .map((p) => {
       const status = state.projects[p.id]?.status || "not-set";
@@ -279,9 +275,10 @@ app.post("/api/projects/:id/copy-to-wip", (req, res) => {
     fs.mkdirSync(project.wipBaseDir, { recursive: true });
   }
 
-  if (!fs.existsSync(project.wipPath)) {
-    fs.cpSync(project.absPath, project.wipPath, { recursive: true });
+  if (fs.existsSync(project.wipPath)) {
+    fs.rmSync(project.wipPath, { recursive: true, force: true });
   }
+  fs.cpSync(project.absPath, project.wipPath, { recursive: true });
 
   return res.json({ ok: true, wipPath: project.wipPath, vscodeWipLink: vscodeFileLink(project.wipPath) });
 });
