@@ -23,20 +23,31 @@
         <div class="toolbar">
           <input id="searchInput" type="text" placeholder="Search by project name or number..." />
           <div class="toolbar-controls">
-            <select id="filterSelect">
-              <option value="all">All</option>
-              <option value="working-on">Working On</option>
-              <option value="postponed">Postponed</option>
-              <option value="done">Done</option>
-            </select>
-            <select id="categorySelect">
-              <option value="all">All Categories</option>
-              <option value="generated">Generated</option>
-              <option value="python-mini-trials">Python MiniTrials</option>
-              <option value="ungenerated">Ungenerated</option>
-            </select>
+            <button id="resetFiltersBtn" class="secondary-btn" type="button">Clear Filters</button>
           </div>
         </div>
+
+        <div class="filter-panel">
+          <div class="filter-section">
+            <div class="filter-title">Status</div>
+            <div class="filter-options">
+              <label><input type="checkbox" data-filter-group="status" value="working-on" /> Working On</label>
+              <label><input type="checkbox" data-filter-group="status" value="postponed" /> Postponed</label>
+              <label><input type="checkbox" data-filter-group="status" value="done" /> Done</label>
+              <label><input type="checkbox" data-filter-group="status" value="not-set" /> Not Set</label>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-title">Category</div>
+            <div class="filter-options">
+              <label><input type="checkbox" data-filter-group="category" value="generated" /> Generated</label>
+              <label><input type="checkbox" data-filter-group="category" value="python-mini-trials" /> Python MiniTrials</label>
+              <label><input type="checkbox" data-filter-group="category" value="ungenerated" /> Ungenerated</label>
+            </div>
+          </div>
+        </div>
+
         <div id="projectList" class="project-list"></div>
       </section>
 

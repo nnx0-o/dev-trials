@@ -1,20 +1,23 @@
 const state = {
   projects: [],
   selectedId: null,
-  filter: "all",
-  category: "all",
-  search: "",
+  filters: {
+    statuses: [],
+    categories: [],
+    search: "",
+  },
   docType: "todo",
   docSource: "original",
 };
 
 const projectListEl = document.getElementById("projectList");
 const projectDetailEl = document.getElementById("projectDetail");
-const filterSelect = document.getElementById("filterSelect");
-const categorySelect = document.getElementById("categorySelect");
 const searchInput = document.getElementById("searchInput");
 const summaryEl = document.getElementById("summary");
 const themeToggle = document.getElementById("themeToggle");
+const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+const statusCheckboxes = Array.from(document.querySelectorAll('input[data-filter-group="status"]'));
+const categoryCheckboxes = Array.from(document.querySelectorAll('input[data-filter-group="category"]'));
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -28,15 +31,19 @@ async function api(path, options = {}) {
 }
 
 function filteredProjects() {
+  const selectedStatuses = state.filters.statuses;
+  const selectedCategories = state.filters.categories;
+  const q = state.filters.search.trim().toLowerCase();
+
   return state.projects.filter((p) => {
-    const q = state.search.trim().toLowerCase();
     const matchesSearch = !q || p.folderName.toLowerCase().includes(q) || String(p.number).includes(q);
     if (!matchesSearch) return false;
 
-    if (state.category !== "all" && p.bucket !== state.category) return false;
+    const matchesStatus = !selectedStatuses.length || selectedStatuses.includes(p.status);
+    if (!matchesStatus) return false;
 
-    if (state.filter === "all") return true;
-    return p.status === state.filter;
+    const matchesCategory = !selectedCategories.length || selectedCategories.includes(p.bucket);
+    return matchesCategory;
   });
 }
 
@@ -230,19 +237,50 @@ async function refresh() {
 async function loadSettings() {
   const settings = await api("/api/settings");
   applyTheme(Boolean(settings.darkMode));
+  applyFilterState(settings.filters || {});
 }
 
-async function saveSettings(darkMode) {
-  await api("/api/settings", {
-    method: "POST",
-    body: JSON.stringify({ darkMode }),
-  });
+async function persistSettings() {
+  const darkMode = themeToggle.dataset.dark === "1";
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      body: JSON.stringify({ darkMode, filters: state.filters }),
+    });
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function applyTheme(isDark) {
   document.body.classList.toggle("dark", isDark);
   themeToggle.textContent = `Dark Mode: ${isDark ? "On" : "Off"}`;
   themeToggle.dataset.dark = isDark ? "1" : "0";
+}
+
+function applyFilterState(filters = {}) {
+  state.filters = {
+    statuses: Array.isArray(filters.statuses) ? filters.statuses.filter((value) => ["working-on", "postponed", "done", "not-set"].includes(value)) : [],
+    categories: Array.isArray(filters.categories) ? filters.categories.filter((value) => ["generated", "python-mini-trials", "ungenerated"].includes(value)) : [],
+    search: typeof filters.search === "string" ? filters.search : "",
+  };
+
+  searchInput.value = state.filters.search;
+  statusCheckboxes.forEach((checkbox) => {
+    checkbox.checked = state.filters.statuses.includes(checkbox.value);
+  });
+  categoryCheckboxes.forEach((checkbox) => {
+    checkbox.checked = state.filters.categories.includes(checkbox.value);
+  });
+  renderProjectList();
+}
+
+function syncFiltersFromUi() {
+  state.filters.statuses = statusCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+  state.filters.categories = categoryCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+  state.filters.search = searchInput.value;
+  renderProjectList();
+  persistSettings();
 }
 
 async function init() {
@@ -256,27 +294,33 @@ async function init() {
     const nextDark = !currentDark;
     applyTheme(nextDark);
     try {
-      await saveSettings(nextDark);
+      await persistSettings();
     } catch (err) {
       applyTheme(currentDark);
       showError(err);
     }
   });
 
-  filterSelect.addEventListener("change", () => {
-    state.filter = filterSelect.value;
-    renderProjectList();
+  resetFiltersBtn.addEventListener("click", () => {
+    statusCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    categoryCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    searchInput.value = "";
+    syncFiltersFromUi();
   });
 
-  categorySelect.addEventListener("change", () => {
-    state.category = categorySelect.value;
-    renderProjectList();
+  statusCheckboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", syncFiltersFromUi);
   });
 
-  searchInput.addEventListener("input", () => {
-    state.search = searchInput.value;
-    renderProjectList();
+  categoryCheckboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", syncFiltersFromUi);
   });
+
+  searchInput.addEventListener("input", syncFiltersFromUi);
 }
 
 init().catch(showError);

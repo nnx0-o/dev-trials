@@ -50,19 +50,37 @@ function ensureWipRoots() {
   return pythonWipRoot;
 }
 
+function normalizeFilters(filters = {}) {
+  const allowedStatuses = ["working-on", "postponed", "done", "not-set"];
+  const allowedCategories = ["generated", "python-mini-trials", "ungenerated"];
+
+  return {
+    statuses: Array.isArray(filters.statuses) ? filters.statuses.filter((value) => allowedStatuses.includes(value)) : [],
+    categories: Array.isArray(filters.categories) ? filters.categories.filter((value) => allowedCategories.includes(value)) : [],
+    search: typeof filters.search === "string" ? filters.search : "",
+  };
+}
+
 function readSettings() {
   ensureSettingsFile();
   try {
     const parsed = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
-    return { darkMode: Boolean(parsed.darkMode) };
+    return {
+      darkMode: Boolean(parsed.darkMode),
+      filters: normalizeFilters(parsed.filters),
+    };
   } catch {
-    return { darkMode: false };
+    return { darkMode: false, filters: normalizeFilters({}) };
   }
 }
 
 function writeSettings(settings) {
   ensureSettingsFile();
-  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
+  const nextSettings = {
+    darkMode: Boolean(settings?.darkMode),
+    filters: normalizeFilters(settings?.filters),
+  };
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(nextSettings, null, 2), "utf8");
 }
 
 function readState() {
@@ -121,6 +139,21 @@ function readProjectDirs(baseDir, bucket) {
     });
 }
 
+function compareProjects(a, b) {
+  const statusOrder = { "working-on": 0, postponed: 1, "not-set": 2, done: 3 };
+  const bucketOrder = { generated: 0, "python-mini-trials": 1, ungenerated: 2 };
+
+  const statusDelta = (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
+  if (statusDelta !== 0) return statusDelta;
+
+  const bucketDelta = (bucketOrder[a.bucket] ?? 99) - (bucketOrder[b.bucket] ?? 99);
+  if (bucketDelta !== 0) return bucketDelta;
+
+  if (a.number !== b.number) return a.number - b.number;
+
+  return a.folderName.localeCompare(b.folderName);
+}
+
 function getAllProjects() {
   ensureWipRoots();
   const state = readState();
@@ -129,11 +162,28 @@ function getAllProjects() {
     ...readProjectDirs(PYTHON_MINITRIALS_ROOT, "python-mini-trials"),
     ...readProjectDirs(UNGENERATED_ROOT, "ungenerated"),
   ]
-    .sort((a, b) => {
-      if (a.bucket === b.bucket) return a.number - b.number;
-      const bucketOrder = { generated: 0, "python-mini-trials": 1, ungenerated: 2 };
-      return bucketOrder[a.bucket] - bucketOrder[b.bucket];
+    .map((p) => {
+      const status = state.projects[p.id]?.status || "not-set";
+      return {
+        ...p,
+        status,
+        vscodeOriginalLink: vscodeFileLink(p.absPath),
+        vscodeWipLink: p.hasWipCopy ? vscodeFileLink(p.wipPath) : null,
+      };
     })
+    .sort(compareProjects);
+
+  return projects;
+}
+
+function getAllProjectsLegacy() {
+  ensureWipRoots();
+  const state = readState();
+  const projects = [
+    ...readProjectDirs(GENERATED_ROOT, "generated"),
+    ...readProjectDirs(PYTHON_MINITRIALS_ROOT, "python-mini-trials"),
+    ...readProjectDirs(UNGENERATED_ROOT, "ungenerated"),
+  ]
     .map((p) => {
       const status = state.projects[p.id]?.status || "not-set";
       return {
@@ -171,12 +221,22 @@ app.get("/api/settings", (_req, res) => {
 });
 
 app.post("/api/settings", (req, res) => {
-  const { darkMode } = req.body;
-  if (typeof darkMode !== "boolean") {
-    return res.status(400).json({ error: "darkMode must be boolean." });
+  const currentSettings = readSettings();
+  const nextSettings = {
+    ...currentSettings,
+    ...req.body,
+    filters: {
+      ...currentSettings.filters,
+      ...(req.body.filters || {}),
+    },
+  };
+
+  if (typeof req.body.darkMode === "boolean") {
+    nextSettings.darkMode = req.body.darkMode;
   }
-  writeSettings({ darkMode });
-  return res.json({ ok: true });
+
+  writeSettings(nextSettings);
+  return res.json(readSettings());
 });
 
 app.post("/api/projects/:id/status", (req, res) => {
